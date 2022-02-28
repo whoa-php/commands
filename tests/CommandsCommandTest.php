@@ -22,6 +22,9 @@ declare(strict_types=1);
 namespace Whoa\Tests\Commands;
 
 use Composer\Composer;
+use Mockery\MockInterface;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Whoa\Commands\CommandsCommand;
 use Whoa\Commands\Traits\CacheFilePathTrait;
 use Whoa\Commands\Traits\CommandSerializationTrait;
@@ -43,10 +46,12 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class CommandsCommandTest extends TestCase
 {
-    use CacheFilePathTrait, CommandSerializationTrait, CommandTrait;
+    use CacheFilePathTrait;
+    use CommandSerializationTrait;
+    use CommandTrait;
 
     /** @var bool */
-    private static $executedFlag = false;
+    private static bool $executedFlag = false;
 
     /**
      * @inheritdoc
@@ -59,17 +64,18 @@ class CommandsCommandTest extends TestCase
 
     /**
      * Test execution for Connect.
-     *
      * @throws ReflectionException
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function testConnect()
     {
         $container = $this->createContainerMock([
-            FileSystemInterface::class     => ($fileSystem = $this->createFileSystemMock()),
+            FileSystemInterface::class => ($fileSystem = $this->createFileSystemMock()),
             CommandStorageInterface::class => ($this->createCommandStorageMock()),
         ]);
 
-        /** @var Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(CommandsCommand::class . '[createContainer,getCommandsCacheFilePath]');
         $command->shouldAllowMockingProtectedMethods();
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($container);
@@ -77,7 +83,7 @@ class CommandsCommandTest extends TestCase
         /** @var CommandsCommand $command */
         $command->setComposer($this->createComposerMock());
 
-        /** @var Mock $fileSystem */
+        /** @var MockInterface $fileSystem */
         $fileSystem->shouldReceive('write')->once()->withAnyArgs()->andReturnUndefined();
 
         $command->execute(
@@ -91,17 +97,18 @@ class CommandsCommandTest extends TestCase
 
     /**
      * Test execution for Connect.
-     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
     public function testConnectWithInvalidCommand()
     {
         $container = $this->createContainerMock([
-            FileSystemInterface::class     => ($fileSystem = $this->createFileSystemMock()),
+            FileSystemInterface::class => ($fileSystem = $this->createFileSystemMock()),
             CommandStorageInterface::class => ($this->createCommandStorageMockWithInvalidCommand()),
         ]);
 
-        /** @var Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(CommandsCommand::class . '[createContainer,getCommandsCacheFilePath]');
         $command->shouldAllowMockingProtectedMethods();
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($container);
@@ -119,17 +126,18 @@ class CommandsCommandTest extends TestCase
 
     /**
      * Test execution for Connect.
-     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
     public function testConnectWithEmptyCachePath()
     {
         $container = $this->createContainerMock([
-            FileSystemInterface::class     => ($fileSystem = $this->createFileSystemMock()),
+            FileSystemInterface::class => ($fileSystem = $this->createFileSystemMock()),
             CommandStorageInterface::class => ($this->createCommandStorageMock()),
         ]);
 
-        /** @var Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(CommandsCommand::class . '[createContainer,getCommandsCacheFilePath]');
         $command->shouldAllowMockingProtectedMethods();
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($container);
@@ -148,30 +156,31 @@ class CommandsCommandTest extends TestCase
 
     /**
      * Test execution for Create.
-     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
     public function testCreate()
     {
-        $folder     = 'some_folder';
-        $cmdClass   = 'NewCommandClass';
-        $classPath  = $folder . DIRECTORY_SEPARATOR . $cmdClass . '.php';
-        $tplPath    = realpath(implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'src', 'SampleCommand.txt']));
+        $folder = 'some_folder';
+        $cmdClass = 'NewCommandClass';
+        $classPath = $folder . DIRECTORY_SEPARATOR . $cmdClass . '.php';
+        $tplPath = realpath(implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'src', 'SampleCommand.txt']));
         $tplContent = file_get_contents($tplPath);
 
         $container = $this->createContainerMock([
-            FileSystemInterface::class            => ($fileSystem = $this->createFileSystemMock()),
+            FileSystemInterface::class => ($fileSystem = $this->createFileSystemMock()),
             CacheSettingsProviderInterface::class => $this->createCacheSettingsProviderMock($folder),
         ]);
 
-        /** @var Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(CommandsCommand::class . '[createContainer,getCommandsCacheFilePath]');
         $command->shouldAllowMockingProtectedMethods();
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($container);
         /** @var CommandsCommand $command */
         $command->setComposer($this->createComposerMock());
 
-        /** @var Mock $fileSystem */
+        /** @var MockInterface $fileSystem */
         $fileSystem->shouldReceive('isFolder')->once()->with($folder)->andReturn(true);
         $fileSystem->shouldReceive('exists')->once()->with($classPath)->andReturn(false);
         $fileSystem->shouldReceive('read')->once()->with($tplPath)->andReturn($tplContent);
@@ -188,7 +197,8 @@ class CommandsCommandTest extends TestCase
 
     /**
      * Test execution for Create.
-     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
     public function testCreateNoArgClass()
@@ -197,7 +207,7 @@ class CommandsCommandTest extends TestCase
 
         $container = $this->createContainerMock([]);
 
-        /** @var Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(CommandsCommand::class . '[createContainer,getCommandsCacheFilePath]');
         $command->shouldAllowMockingProtectedMethods();
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($container);
@@ -215,27 +225,28 @@ class CommandsCommandTest extends TestCase
 
     /**
      * Test execution for Create.
-     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
     public function testCreateInvalidCommandsFolder()
     {
-        $folder   = 'some_folder';
+        $folder = 'some_folder';
         $cmdClass = 'NewCommandClass';
 
         $container = $this->createContainerMock([
-            FileSystemInterface::class            => ($fileSystem = $this->createFileSystemMock()),
+            FileSystemInterface::class => ($fileSystem = $this->createFileSystemMock()),
             CacheSettingsProviderInterface::class => $this->createCacheSettingsProviderMock($folder),
         ]);
 
-        /** @var Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(CommandsCommand::class . '[createContainer,getCommandsCacheFilePath]');
         $command->shouldAllowMockingProtectedMethods();
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($container);
         /** @var CommandsCommand $command */
         $command->setComposer($this->createComposerMock());
 
-        /** @var Mock $fileSystem */
+        /** @var MockInterface $fileSystem */
         $fileSystem->shouldReceive('isFolder')->once()->with($folder)->andReturn(false); // <-- invalid folder
 
         $command->execute(
@@ -249,28 +260,29 @@ class CommandsCommandTest extends TestCase
 
     /**
      * Test execution for Create.
-     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
     public function testCreateCommandAlreadyExists()
     {
-        $folder    = 'some_folder';
-        $cmdClass  = 'NewCommandClass';
+        $folder = 'some_folder';
+        $cmdClass = 'NewCommandClass';
         $classPath = $folder . DIRECTORY_SEPARATOR . $cmdClass . '.php';
 
         $container = $this->createContainerMock([
-            FileSystemInterface::class            => ($fileSystem = $this->createFileSystemMock()),
+            FileSystemInterface::class => ($fileSystem = $this->createFileSystemMock()),
             CacheSettingsProviderInterface::class => $this->createCacheSettingsProviderMock($folder),
         ]);
 
-        /** @var Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(CommandsCommand::class . '[createContainer,getCommandsCacheFilePath]');
         $command->shouldAllowMockingProtectedMethods();
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($container);
         /** @var CommandsCommand $command */
         $command->setComposer($this->createComposerMock());
 
-        /** @var Mock $fileSystem */
+        /** @var MockInterface $fileSystem */
         $fileSystem->shouldReceive('isFolder')->once()->with($folder)->andReturn(true);
         $fileSystem->shouldReceive('exists')->once()->with($classPath)->andReturn(true); // <-- already exists
 
@@ -285,7 +297,8 @@ class CommandsCommandTest extends TestCase
 
     /**
      * Test execution for Connect.
-     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      */
     public function testInvalidAction()
@@ -294,7 +307,7 @@ class CommandsCommandTest extends TestCase
 
         $container = $this->createContainerMock([]);
 
-        /** @var Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(CommandsCommand::class . '[createContainer,getCommandsCacheFilePath]');
         $command->shouldAllowMockingProtectedMethods();
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($container);
@@ -317,22 +330,20 @@ class CommandsCommandTest extends TestCase
     {
         /** @var CommandsCommand $command */
 
-        $composer = Mockery::mock(Composer::class);
-
+        /** @var MockInterface $composer */
         /** @var Composer $composer */
 
-        return $composer;
+        return Mockery::mock(Composer::class);
     }
 
     /**
-     * @param string      $argAction
+     * @param string $argAction
      * @param string|null $argClass
-     *
      * @return InputInterface
      */
     private function createInputMock(string $argAction, string $argClass = null): InputInterface
     {
-        /** @var Mock $input */
+        /** @var MockInterface $input */
         $input = Mockery::mock(InputInterface::class);
 
         $input->shouldReceive('getArgument')->once()->withAnyArgs()->andReturn($argAction);
@@ -351,12 +362,11 @@ class CommandsCommandTest extends TestCase
 
     /**
      * @param int $writeTimes
-     *
      * @return OutputInterface
      */
     private function createOutputMock(int $writeTimes = 0): OutputInterface
     {
-        /** @var Mock $output */
+        /** @var MockInterface $output */
         $output = Mockery::mock(OutputInterface::class);
 
         if ($writeTimes > 0) {
@@ -374,9 +384,7 @@ class CommandsCommandTest extends TestCase
     private function createFileSystemMock(): FileSystemInterface
     {
         /** @var FileSystemInterface $fileSystem */
-        $fileSystem = Mockery::mock(FileSystemInterface::class);
-
-        return $fileSystem;
+        return Mockery::mock(FileSystemInterface::class);
     }
 
     /**
@@ -384,7 +392,7 @@ class CommandsCommandTest extends TestCase
      */
     private function createCommandStorageMock(): CommandStorageInterface
     {
-        /** @var Mock $commandStorage */
+        /** @var MockInterface $commandStorage */
         $commandStorage = Mockery::mock(CommandStorageInterface::class);
 
         $commandStorage->shouldReceive('getAll')->once()->withNoArgs()->andReturn([TestCommand::class]);
@@ -399,7 +407,7 @@ class CommandsCommandTest extends TestCase
      */
     private function createCommandStorageMockWithInvalidCommand(): CommandStorageInterface
     {
-        /** @var Mock $commandStorage */
+        /** @var MockInterface $commandStorage */
         $commandStorage = Mockery::mock(CommandStorageInterface::class);
 
         $commandStorage->shouldReceive('getAll')->once()->withNoArgs()->andReturn([self::class]); // <-- invalid class
@@ -411,12 +419,11 @@ class CommandsCommandTest extends TestCase
 
     /**
      * @param array $items
-     *
      * @return ContainerInterface
      */
     private function createContainerMock(array $items): ContainerInterface
     {
-        /** @var Mock $container */
+        /** @var MockInterface|ContainerInterface $container */
         $container = Mockery::mock(ContainerInterface::class);
 
         foreach ($items as $key => $item) {
@@ -431,12 +438,11 @@ class CommandsCommandTest extends TestCase
 
     /**
      * @param string $commandFolder
-     *
      * @return CacheSettingsProviderInterface
      */
     private function createCacheSettingsProviderMock(string $commandFolder): CacheSettingsProviderInterface
     {
-        /** @var Mock $provider */
+        /** @var MockInterface $provider */
         $provider = Mockery::mock(CacheSettingsProviderInterface::class);
 
         $provider->shouldReceive('getApplicationConfiguration')

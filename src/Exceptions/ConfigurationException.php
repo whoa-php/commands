@@ -26,4 +26,5 @@ namespace Whoa\Commands\Exceptions;
  */
 class ConfigurationException extends CommandsException
 {
+
 }

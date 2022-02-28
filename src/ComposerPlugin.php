@@ -27,6 +27,7 @@ use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
 use Whoa\Commands\Traits\CacheFilePathTrait;
+
 use function assert;
 use function array_merge;
 use function is_array;
@@ -40,10 +41,8 @@ class ComposerPlugin implements PluginInterface, Capable
 
     /**
      * @inheritdoc
-     *
-     * @SuppressWarnings(PHPMD.StaticAccess)
      */
-    public function activate(Composer $composer, IOInterface $ioInterface)
+    public function activate(Composer $composer, IOInterface $io)
     {
         $builtInCommands = [
             new CommandsCommand(),
@@ -52,12 +51,11 @@ class ComposerPlugin implements PluginInterface, Capable
         // Due to https://github.com/composer/composer/issues/6315 we cannot load
         // application at this stage.
         //
-        // So we create command proxies and when one one of them is called we actually
+        // So we create command proxies and when one of them is called we actually
         // create application and execute the command.
-        $commands          = [];
+        $commands = [];
         $commandsCacheFile = $this->getCommandsCacheFilePath($composer);
         if ($commandsCacheFile !== null && file_exists($commandsCacheFile) === true) {
-            /** @noinspection PhpIncludeInspection */
             $cacheData = require $commandsCacheFile;
             assert(is_array($cacheData));
             foreach ($cacheData as $commandData) {
@@ -72,10 +70,26 @@ class ComposerPlugin implements PluginInterface, Capable
     /**
      * @inheritdoc
      */
-    public function getCapabilities()
+    public function getCapabilities(): array
     {
         return [
             CommandProvider::class => ComposerCommandProvider::class,
         ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function deactivate(Composer $composer, IOInterface $io): void
+    {
+        $io->write('activate `whoa-php/commands`.');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function uninstall(Composer $composer, IOInterface $io): void
+    {
+        $io->write('uninstall `whoa-php/commands`.');
     }
 }

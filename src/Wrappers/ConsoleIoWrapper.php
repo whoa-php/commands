@@ -33,20 +33,20 @@ class ConsoleIoWrapper implements IoInterface
     /**
      * @var InputInterface
      */
-    private $input;
+    private InputInterface $input;
 
     /**
      * @var OutputInterface
      */
-    private $output;
+    private OutputInterface $output;
 
     /**
-     * @param InputInterface  $input
+     * @param InputInterface $input
      * @param OutputInterface $output
      */
     public function __construct(InputInterface $input, OutputInterface $output)
     {
-        $this->input  = $input;
+        $this->input = $input;
         $this->output = $output;
     }
 
@@ -104,7 +104,7 @@ class ConsoleIoWrapper implements IoInterface
     public function writeInfo(string $message, int $verbosity = self::VERBOSITY_NORMAL): IoInterface
     {
         $isNewLine = false;
-        $options   = $this->convertVerbosityLevel($verbosity);
+        $options = $this->convertVerbosityLevel($verbosity);
         $this->getOutput()->write("<info>$message</info>", $isNewLine, $options);
 
         return $this;
@@ -116,7 +116,7 @@ class ConsoleIoWrapper implements IoInterface
     public function writeWarning(string $message, int $verbosity = self::VERBOSITY_NORMAL): IoInterface
     {
         $isNewLine = false;
-        $options   = $this->convertVerbosityLevel($verbosity);
+        $options = $this->convertVerbosityLevel($verbosity);
         $this->getOutput()->write("<comment>$message</comment>", $isNewLine, $options);
 
         return $this;
@@ -128,7 +128,7 @@ class ConsoleIoWrapper implements IoInterface
     public function writeError(string $message, int $verbosity = self::VERBOSITY_NORMAL): IoInterface
     {
         $isNewLine = false;
-        $options   = $this->convertVerbosityLevel($verbosity);
+        $options = $this->convertVerbosityLevel($verbosity);
         $this->getOutput()->write("<error>$message</error>", $isNewLine, $options);
 
         return $this;
@@ -152,7 +152,6 @@ class ConsoleIoWrapper implements IoInterface
 
     /**
      * @param int $verbosity
-     *
      * @return int
      */
     protected function convertVerbosityLevel(int $verbosity): int
@@ -160,9 +159,6 @@ class ConsoleIoWrapper implements IoInterface
         switch ($verbosity) {
             case static::VERBOSITY_QUIET:
                 $result = OutputInterface::VERBOSITY_QUIET;
-                break;
-            case static::VERBOSITY_NORMAL:
-                $result = OutputInterface::VERBOSITY_NORMAL;
                 break;
             case static::VERBOSITY_VERBOSE:
                 $result = OutputInterface::VERBOSITY_VERBOSE;

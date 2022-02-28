@@ -23,6 +23,7 @@ namespace Whoa\Commands;
 
 use Composer\Command\BaseCommand;
 use Composer\Plugin\Capability\CommandProvider;
+
 use function assert;
 
 /**
@@ -33,22 +34,19 @@ class ComposerCommandProvider implements CommandProvider
     /**
      * @var BaseCommand[]
      */
-    private static $commands = [];
+    private static array $commands = [];
 
     /**
      * @inheritdoc
      */
-    public function getCommands()
+    public function getCommands(): array
     {
         return static::$commands;
     }
 
     /**
      * @param BaseCommand[] $commands
-     *
      * @return void
-     *
-     * @SuppressWarnings(PHPMD.StaticAccess)
      */
     public static function setCommands(array $commands): void
     {
@@ -59,7 +57,6 @@ class ComposerCommandProvider implements CommandProvider
 
     /**
      * @param array $commands
-     *
      * @return bool
      */
     private static function areCommands(array $commands): bool

@@ -22,55 +22,56 @@ declare(strict_types=1);
 namespace Whoa\Tests\Commands;
 
 use Composer\Composer;
+use Composer\Config as ComposerConfig;
 use Composer\IO\NullIO;
+use Composer\Package\RootPackageInterface;
+use Mockery\MockInterface;
 use Whoa\Commands\CommandConstants;
 use Whoa\Commands\ComposerCommandProvider;
 use Whoa\Commands\ComposerPlugin;
 use Mockery;
+use Whoa\Contracts\Container\ContainerInterface;
 
 /**
  * @package Whoa\Tests\Commands
  */
 class ComposerPluginTest extends TestCase
 {
-    /**
-     * @inheritdoc
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-    }
 
     /**
      * Test plugin.
      */
     public function testActivate()
     {
-        /** @var Mockery\Mock $composer */
+        /** @var MockInterface $composer */
         $composer = Mockery::mock(Composer::class);
 
         $fileName = implode(DIRECTORY_SEPARATOR, ['tests', 'Data', 'TestCacheData.php']);
-        $composer->shouldReceive('getPackage')->once()->withNoArgs()->andReturnSelf();
-        $composer->shouldReceive('getExtra')->once()->withNoArgs()->andReturn([
+        /** @var MockInterface $rootPackage */
+        $rootPackage = Mockery::mock(RootPackageInterface::class);
+        $rootPackage->shouldReceive('getExtra')->once()->withNoArgs()->andReturn([
             CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION => [
                 CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION__COMMANDS_CACHE => $fileName,
             ],
         ]);
+        $composer->shouldReceive('getPackage')->once()->withNoArgs()->andReturn($rootPackage);
 
-        $vendorDir = __DIR__ . DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR . 'vendor';
-        $composer->shouldReceive('getConfig')->once()->withNoArgs()->andReturnSelf();
-        $composer->shouldReceive('get')->once()->with('vendor-dir')->andReturn($vendorDir);
+        $vendorDir = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor';
+        /** @var MockInterface $composerConfig */
+        $composerConfig = Mockery::mock(ComposerConfig::class);
+        $composerConfig->shouldReceive('get')->once()->with('vendor-dir')->andReturn($vendorDir);
+
+        $composer->shouldReceive('getConfig')->once()->withNoArgs()->andReturn($composerConfig);
 
         /** @var Composer $composer */
 
         $ioInterface = new NullIO();
-        $plugin      = new ComposerPlugin();
+        $plugin = new ComposerPlugin();
 
         $this->assertNotEmpty($plugin->getCapabilities());
 
         ComposerCommandProvider::setCommands([]);
         $plugin->activate($composer, $ioInterface);
-        /** @noinspection PhpParamsInspection */
         $this->assertCount(2, (new ComposerCommandProvider())->getCommands());
     }
 }

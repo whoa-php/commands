@@ -23,6 +23,7 @@ namespace Whoa\Commands\Traits;
 
 use Composer\Composer;
 use Whoa\Commands\CommandConstants;
+
 use function realpath;
 
 /**
@@ -32,17 +33,16 @@ trait CacheFilePathTrait
 {
     /**
      * @param Composer $composer
-     *
      * @return null|string
      */
     protected function getCommandsCacheFilePath(Composer $composer): ?string
     {
-        $extra             = $composer->getPackage()->getExtra();
-        $keyApp            = CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION;
-        $keyCacheFile      = CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION__COMMANDS_CACHE;
+        $extra = $composer->getPackage()->getExtra();
+        $keyApp = CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION;
+        $keyCacheFile = CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION__COMMANDS_CACHE;
         $commandsCacheFile = $extra[$keyApp][$keyCacheFile] ?? null;
         if ($commandsCacheFile !== null) {
-            $appRootPath       = $composer->getConfig()->get('vendor-dir') . DIRECTORY_SEPARATOR . '..';
+            $appRootPath = $composer->getConfig()->get('vendor-dir') . DIRECTORY_SEPARATOR . '..';
             $commandsCacheFile = realpath($appRootPath) . DIRECTORY_SEPARATOR . $commandsCacheFile;
         }
 

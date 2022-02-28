@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Whoa\Tests\Commands\Data;
 
+use Mockery\MockInterface;
 use Whoa\Contracts\Container\ContainerInterface;
 use Whoa\Contracts\Core\ApplicationInterface;
 use Whoa\Contracts\Core\SapiInterface;
@@ -44,10 +45,8 @@ class TestApplication implements ApplicationInterface
      */
     public function createContainer(string $method = null, string $path = null): ContainerInterface
     {
-        /** @var ContainerInterface $mock */
-        $mock = Mockery::mock(ContainerInterface::class);
-
-        return $mock;
+        /** @var MockInterface|ContainerInterface $mock */
+        return Mockery::mock(ContainerInterface::class);
     }
 
     /**

@@ -2,4 +2,4 @@
 .vscode/
 vendor/
 .phpunit.result.cache
-composer.phar
+*.phar

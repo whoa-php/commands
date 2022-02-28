@@ -30,7 +30,6 @@ trait CommandSerializationTrait
 {
     /**
      * @param string $commandClass
-     *
      * @return array
      */
     protected function commandClassToArray(string $commandClass): array

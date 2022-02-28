@@ -28,8 +28,8 @@ interface CommandConstants
 {
     /**
      * When command is executed it creates a container from user application. On container creation
-     * an HTTP verb (e.g. GET, PUT, etc) and HTTP path (e.g. '/homepage') could be specified so
-     * the container could be configured for those verb and path.
+     * an HTTP verb (e.g. GET, PUT, etc.) and HTTP path (e.g. '/homepage') could be specified so
+     * the container could be configured for those verbs and path.
      *
      * In order to give the application and idea that it's executed for command a special
      * HTTP verb and command name as HTTP path would be used as input parameters.
@@ -41,27 +41,27 @@ interface CommandConstants
      * 'extension-methods' are also possible which should have syntax of a 'token'.
      *
      * According to https://tools.ietf.org/html/rfc2068#section-2.2 a 'token' should be
-     *     1*<any CHAR except CTLs or tspecials>
-     * (non empty string without CTL and tspecial characters)
+     *     1*<any CHAR except CTLs or specials>
+     * (non-empty string without CTL and special characters)
      * where
      *     CTL       - any US-ASCII control character (octets 0 - 31) and DEL (127)
-     *     tspecials - "(" | ")" | "<" | ">" | "@" | "," | ";" | ":" | "\" | <"> | "/" |
+     *     specials - "(" | ")" | "<" | ">" | "@" | "," | ";" | ":" | "\" | <"> | "/" |
      *                 "[" | "]" | "?" | "=" | "{" | "}" |
      *                 US-ASCII SP, space (32) | US-ASCII HT, horizontal-tab (9)
      *
      * So if we start the verb from '>' we guarantee it will be collision free.
      */
-    const HTTP_METHOD = '>COMMAND';
+    public const HTTP_METHOD = '>COMMAND';
 
     /** Expected key at `composer.json` -> "extra" */
-    const COMPOSER_JSON__EXTRA__APPLICATION = 'application';
+    public const COMPOSER_JSON__EXTRA__APPLICATION = 'application';
 
     /** Expected key at `composer.json` -> "extra" -> "application" */
-    const COMPOSER_JSON__EXTRA__APPLICATION__CLASS = 'class';
+    public const COMPOSER_JSON__EXTRA__APPLICATION__CLASS = 'class';
 
     /** Default application class name if not replaced via "extra" -> "application" -> "class" */
-    const DEFAULT_APPLICATION_CLASS_NAME = '\\App\\Application';
+    public const DEFAULT_APPLICATION_CLASS_NAME = '\\App\\Application';
 
     /** Expected key at `composer.json` -> "extra" -> "application" */
-    const COMPOSER_JSON__EXTRA__APPLICATION__COMMANDS_CACHE = 'commands_cache';
+    public const COMPOSER_JSON__EXTRA__APPLICATION__COMMANDS_CACHE = 'commands_cache';
 }

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Whoa\Tests\Commands;
 
+use Mockery\MockInterface;
 use Whoa\Commands\Wrappers\ConsoleIoWrapper;
 use Mockery;
 use Symfony\Component\Console\Input\InputInterface;
@@ -36,9 +37,9 @@ class ConsoleIoWrapperTest extends TestCase
      */
     public function testActivate(): void
     {
-        /** @var Mockery\Mock $input */
-        /** @var Mockery\Mock $output */
-        $input  = Mockery::mock(InputInterface::class);
+        /** @var MockInterface $input */
+        /** @var MockInterface $output */
+        $input = Mockery::mock(InputInterface::class);
         $output = Mockery::mock(OutputInterface::class);
 
         $input->shouldReceive('getArguments')->zeroOrMoreTimes()->withNoArgs()->andReturn([]);
@@ -63,7 +64,6 @@ class ConsoleIoWrapperTest extends TestCase
 
     /**
      * Test verbosity convert.
-     *
      * @return void
      */
     public function testVerbosityConvert(): void
@@ -74,7 +74,7 @@ class ConsoleIoWrapperTest extends TestCase
              */
             public function __construct()
             {
-                $input  = Mockery::mock(InputInterface::class);
+                $input = Mockery::mock(InputInterface::class);
                 $output = Mockery::mock(OutputInterface::class);
 
                 /** @var InputInterface $input */

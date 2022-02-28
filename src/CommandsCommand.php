@@ -38,6 +38,7 @@ use ReflectionException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+
 use function assert;
 use function array_key_exists;
 
@@ -46,32 +47,32 @@ use function array_key_exists;
  * load command list from user application and generate a special cache file with the list. On the next
  * composer run the list would be loaded into composer and all the commands would be available.
  *
- * Also it provides such a nice feature as generation of an empty/template command for the developer.
+ * Also, it provides such a nice feature as generation of an empty/template command for the developer.
  *
  * @package Whoa\Commands
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class CommandsCommand extends BaseCommand
 {
-    use CommandTrait, CommandSerializationTrait, CacheFilePathTrait;
+    use CacheFilePathTrait;
+    use CommandSerializationTrait;
+    use CommandTrait;
 
     /**
      * Command name.
      */
-    const NAME = 'l:commands';
+    public const NAME = 'w:commands';
 
     /** Argument name */
-    const ARG_ACTION = 'action';
+    public const ARG_ACTION = 'action';
 
     /** Command action */
-    const ACTION_CONNECT = 'connect';
+    public const ACTION_CONNECT = 'connect';
 
     /** Command action */
-    const ACTION_CREATE = 'create';
+    public const ACTION_CREATE = 'create';
 
     /** Argument name */
-    const ARG_CLASS = 'class';
+    public const ARG_CLASS = 'class';
 
     /**
      * Constructor.
@@ -88,8 +89,8 @@ class CommandsCommand extends BaseCommand
     {
         parent::configure();
 
-        $connect    = static::ACTION_CONNECT;
-        $create     = static::ACTION_CREATE;
+        $connect = static::ACTION_CONNECT;
+        $create = static::ACTION_CREATE;
         $actionDesc = "Required action such as `$connect` to find and connect commands from application and plugins " .
             "or `$create` to create an empty command template.";
 
@@ -105,18 +106,19 @@ class CommandsCommand extends BaseCommand
     }
 
 
-    /** @noinspection PhpMissingParentCallCommonInspection
+    /**
      * @inheritdoc
-     *
      * @throws ReflectionException
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $inOut     = $this->wrapIo($input, $output);
+        $inOut = $this->wrapIo($input, $output);
         $container = $this->createContainer($this->getComposer(), static::NAME);
 
         $argAction = static::ARG_ACTION;
-        $action    = $inOut->getArgument($argAction);
+        $action = $inOut->getArgument($argAction);
         switch ($action) {
             case static::ACTION_CONNECT:
                 $this->executeConnect($container, $inOut);
@@ -132,10 +134,8 @@ class CommandsCommand extends BaseCommand
 
     /**
      * @param ContainerInterface $container
-     * @param IoInterface        $inOut
-     *
+     * @param IoInterface $inOut
      * @return void
-     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
@@ -160,9 +160,9 @@ class CommandsCommand extends BaseCommand
         }
 
         if (empty($commandClasses) === false) {
-            $now           = date(DATE_RFC2822);
-            $data          = var_export($commandClasses, true);
-            $content       = <<<EOT
+            $now = date(DATE_RFC2822);
+            $data = var_export($commandClasses, true);
+            $content = <<<EOT
 <?php
 
 // THIS FILE IS AUTO GENERATED. DO NOT EDIT IT MANUALLY.
@@ -190,10 +190,8 @@ EOT;
 
     /**
      * @param ContainerInterface $container
-     * @param IoInterface        $inOut
-     *
+     * @param IoInterface $inOut
      * @return void
-     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
@@ -207,7 +205,7 @@ EOT;
         }
         $class = $inOut->getArgument($argClass);
 
-        $fileSystem     = $this->getFileSystem($container);
+        $fileSystem = $this->getFileSystem($container);
         $commandsFolder = $this->getCommandsFolder($container);
         if (empty($commandsFolder) === true || $fileSystem->isFolder($commandsFolder) === false) {
             $inOut->writeError(
@@ -239,18 +237,19 @@ EOT;
         };
 
         $templateContent = $fileSystem->read(__DIR__ . DIRECTORY_SEPARATOR);
-        $fileSystem->write($classPath, $replace($templateContent, [
-            '{CLASS_NAME}'   => $class,
-            '{COMMAND_NAME}' => strtolower($class),
-            '{TO_DO}'        => 'TODO',
-        ]));
+        $fileSystem->write(
+            $classPath,
+            $replace($templateContent, [
+                '{CLASS_NAME}' => $class,
+                '{COMMAND_NAME}' => strtolower($class),
+                '{TO_DO}' => 'TODO',
+            ])
+        );
     }
 
     /**
      * @param ContainerInterface $container
-     *
      * @return string
-     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
@@ -259,18 +258,14 @@ EOT;
         assert($container->has(CacheSettingsProviderInterface::class));
 
         /** @var CacheSettingsProviderInterface $provider */
-        $provider  = $container->get(CacheSettingsProviderInterface::class);
+        $provider = $container->get(CacheSettingsProviderInterface::class);
         $appConfig = $provider->getApplicationConfiguration();
-        $folder    = $appConfig[S::KEY_COMMANDS_FOLDER];
-
-        return $folder;
+        return $appConfig[S::KEY_COMMANDS_FOLDER];
     }
 
     /**
      * @param ContainerInterface $container
-     *
      * @return FileSystemInterface
-     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
@@ -279,8 +274,6 @@ EOT;
         assert($container->has(FileSystemInterface::class));
 
         /** @var FileSystemInterface $fileSystem */
-        $fileSystem = $container->get(FileSystemInterface::class);
-
-        return $fileSystem;
+        return $container->get(FileSystemInterface::class);
     }
 }

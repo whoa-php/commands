@@ -30,7 +30,7 @@ use Whoa\Contracts\Container\ContainerInterface;
 class TestCliContainerConfiguratorCommand1 implements ContainerConfiguratorInterface
 {
     /** @var bool Flag if container was called */
-    private static $isExecuted = false;
+    private static bool $isExecuted = false;
 
     /** @var array Container callable */
     public const CALLABLE_METHOD = [self::class, self::CONTAINER_METHOD_NAME];

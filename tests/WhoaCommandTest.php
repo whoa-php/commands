@@ -22,8 +22,13 @@ declare(strict_types=1);
 namespace Whoa\Tests\Commands;
 
 use Composer\Composer;
+use Composer\Config as ComposerConfig;
+use Composer\Package\RootPackageInterface;
 use Exception;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Whoa\Commands\CommandConstants;
+use Whoa\Commands\Exceptions\ConfigurationException;
 use Whoa\Commands\WhoaCommand;
 use Whoa\Commands\Traits\CacheFilePathTrait;
 use Whoa\Commands\Traits\CommandSerializationTrait;
@@ -49,10 +54,12 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class WhoaCommandTest extends TestCase
 {
-    use CacheFilePathTrait, CommandSerializationTrait, CommandTrait;
+    use CacheFilePathTrait;
+    use CommandSerializationTrait;
+    use CommandTrait;
 
     /** @var bool */
-    private static $executedFlag = false;
+    private static bool $executedFlag = false;
 
     /**
      * @inheritdoc
@@ -66,12 +73,12 @@ class WhoaCommandTest extends TestCase
 
     /**
      * Test basic command behaviour.
-     *
-     * @throws Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function testCommand(): void
     {
-        $name    = TestCliRoutesConfigurator::COMMAND_NAME_1;
+        $name = TestCliRoutesConfigurator::COMMAND_NAME_1;
         $command = $this->createCommandMock($name);
 
         $command->shouldReceive('createContainer')->once()->withAnyArgs()->andReturn($this->createContainerMock());
@@ -80,8 +87,8 @@ class WhoaCommandTest extends TestCase
 
         $this->assertEquals($name, $command->getName());
 
-        $input    = Mockery::mock(InputInterface::class);
-        $output   = Mockery::mock(OutputInterface::class);
+        $input = Mockery::mock(InputInterface::class);
+        $output = Mockery::mock(OutputInterface::class);
         $composer = Mockery::mock(Composer::class);
 
         /** @var InputInterface $input */
@@ -102,8 +109,8 @@ class WhoaCommandTest extends TestCase
 
     /**
      * Test if container creation fails.
-     *
-     * @throws Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function testContainerCreationFails(): void
     {
@@ -114,8 +121,8 @@ class WhoaCommandTest extends TestCase
 
         /** @var WhoaCommand $command */
 
-        $input    = Mockery::mock(InputInterface::class);
-        $output   = Mockery::mock(OutputInterface::class);
+        $input = Mockery::mock(InputInterface::class);
+        $output = Mockery::mock(OutputInterface::class);
         $composer = Mockery::mock(Composer::class);
 
         $output->shouldReceive('writeln')->once()->withAnyArgs()->andReturnUndefined();
@@ -139,15 +146,15 @@ class WhoaCommandTest extends TestCase
 
     /**
      * Test custom error handler.
-     *
-     * @throws Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function testCustomErrorHandler(): void
     {
         $command = $this->createCommandMock('name', [self::class, 'callbackWithThrow']);
 
-        $handler   = Mockery::mock(ThrowableHandlerInterface::class);
-        $response  = Mockery::mock(ThrowableResponseInterface::class);
+        $handler = Mockery::mock(ThrowableHandlerInterface::class);
+        $response = Mockery::mock(ThrowableResponseInterface::class);
         $container = $this->createContainerMock();
         $container->shouldReceive('has')->withArgs([ThrowableHandlerInterface::class])->andReturn(true);
         $container->shouldReceive('get')->withArgs([ThrowableHandlerInterface::class])->andReturn($handler);
@@ -159,8 +166,8 @@ class WhoaCommandTest extends TestCase
 
         /** @var WhoaCommand $command */
 
-        $input    = Mockery::mock(InputInterface::class);
-        $output   = Mockery::mock(OutputInterface::class);
+        $input = Mockery::mock(InputInterface::class);
+        $output = Mockery::mock(OutputInterface::class);
         $composer = Mockery::mock(Composer::class);
 
         $output->shouldReceive('writeln')->once()->withAnyArgs()->andReturnUndefined();
@@ -184,36 +191,37 @@ class WhoaCommandTest extends TestCase
 
     /**
      * Test trait method.
-     *
      * @throws Exception
      */
     public function testGetCommandsCacheFilePath(): void
     {
-        /** @var Mockery\Mock $composer */
+        /** @var MockInterface $composer */
         $composer = Mockery::mock(Composer::class);
 
         $fileName = 'composer.json';
-        $composer->shouldReceive('getPackage')->once()->withNoArgs()->andReturnSelf();
-        $composer->shouldReceive('getExtra')->once()->withNoArgs()->andReturn([
+        /** @var RootPackageInterface $rootPackage */
+        $rootPackage = Mockery::mock(RootPackageInterface::class);
+        $rootPackage->shouldReceive('getExtra')->once()->withNoArgs()->andReturn([
             CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION => [
                 CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION__COMMANDS_CACHE => $fileName,
             ],
         ]);
+        $composer->shouldReceive('getPackage')->once()->withNoArgs()->andReturn($rootPackage);
 
-        $vendorDir = __DIR__ . DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR . 'vendor';
-        $composer->shouldReceive('getConfig')->once()->withNoArgs()->andReturnSelf();
-        $composer->shouldReceive('get')->once()->with('vendor-dir')->andReturn($vendorDir);
+        $vendorDir = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor';
+        /** @var MockInterface $composerConfig */
+        $composerConfig = Mockery::mock(ComposerConfig::class);
+        $composerConfig->shouldReceive('get')->once()->with('vendor-dir')->andReturn($vendorDir);
+        $composer->shouldReceive('getConfig')->once()->withNoArgs()->andReturn($composerConfig);
 
         /** @var Composer $composer */
-
-        $path     = $this->getCommandsCacheFilePath($composer);
+        $path = $this->getCommandsCacheFilePath($composer);
         $expected = realpath($vendorDir . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . $fileName);
         $this->assertEquals($expected, $path);
     }
 
     /**
      * Test trait method.
-     *
      * @throws Exception
      */
     public function testCommandSerialization(): void
@@ -223,55 +231,62 @@ class WhoaCommandTest extends TestCase
 
     /**
      * Test trait method.
-     *
      * @throws Exception
      */
     public function testCreateContainer(): void
     {
-        /** @var Mockery\Mock $composer */
+        /** @var MockInterface $composer */
         $composer = Mockery::mock(Composer::class);
 
         $vendorDir = __DIR__ . DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR . 'vendor';
-        $composer->shouldReceive('getConfig')->once()->withNoArgs()->andReturnSelf();
-        $composer->shouldReceive('get')->once()->with('vendor-dir')->andReturn($vendorDir);
+        /** @var MockInterface $composerConfig */
+        $composerConfig = Mockery::mock(ComposerConfig::class);
+        $composerConfig->shouldReceive('get')->with('vendor-dir')->andReturn($vendorDir);
+
+        $composer->shouldReceive('getConfig')->once()->withNoArgs()->andReturn($composerConfig);
 
         $extra = [
             CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION => [
                 CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION__CLASS => TestApplication::class,
             ],
         ];
-        $composer->shouldReceive('getPackage')->once()->withNoArgs()->andReturnSelf();
-        $composer->shouldReceive('getExtra')->once()->withNoArgs()->andReturn($extra);
+        /** @var RootPackageInterface $rootPackage */
+        $rootPackage = Mockery::mock(RootPackageInterface::class);
+        $rootPackage->shouldReceive('getExtra')->withNoArgs()->andReturn($extra);
+        $composer->shouldReceive('getPackage')->once()->withNoArgs()->andReturn($rootPackage);
 
         /** @var Composer $composer */
-
         $this->assertNotNull($this->createContainer($composer));
     }
 
     /**
      * Test trait method.
-     *
      * @throws ReflectionException
      */
     public function testCreateContainerForInvalidAppClass(): void
     {
+        $this->expectException(ConfigurationException::class);
 
-        $this->expectException(\Whoa\Commands\Exceptions\ConfigurationException::class);
-
-        /** @var Mockery\Mock $composer */
+        /** @var MockInterface $composer */
         $composer = Mockery::mock(Composer::class);
 
-        $vendorDir = __DIR__ . DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR . 'vendor';
-        $composer->shouldReceive('getConfig')->once()->withNoArgs()->andReturnSelf();
-        $composer->shouldReceive('get')->once()->with('vendor-dir')->andReturn($vendorDir);
+        $vendorDir = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor';
+        /** @var MockInterface $composerConfig */
+        $composerConfig = Mockery::mock(ComposerConfig::class);
+        $composerConfig->shouldReceive('get')->once()->with('vendor-dir')->andReturn($vendorDir);
+
+        $composer->shouldReceive('getConfig')->once()->withNoArgs()->andReturn($composerConfig);
 
         $extra = [
             CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION => [
                 CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION__CLASS => self::class, // <-- invalid App class
             ],
         ];
-        $composer->shouldReceive('getPackage')->once()->withNoArgs()->andReturnSelf();
-        $composer->shouldReceive('getExtra')->once()->withNoArgs()->andReturn($extra);
+        /** @var MockInterface $rootPackage */
+        $rootPackage = Mockery::mock(RootPackageInterface::class);
+        $rootPackage->shouldReceive('getExtra')->once()->withNoArgs()->andReturn($extra);
+
+        $composer->shouldReceive('getPackage')->once()->withNoArgs()->andReturn($rootPackage);
 
         /** @var Composer $composer */
 
@@ -300,29 +315,29 @@ class WhoaCommandTest extends TestCase
 
     /**
      * @param string $name
-     *
-     * @param array  $callable
-     *
-     * @return Mockery\Mock
+     * @param array $callable
+     * @return MockInterface
      */
-    private function createCommandMock(string $name = 'name', $callable = [self::class, 'callback1'])
-    {
+    private function createCommandMock(
+        string $name = 'name',
+        array $callable = [self::class, 'callback1']
+    ): MockInterface {
         $description = 'description';
-        $help        = 'help';
-        $argName1    = 'arg1';
-        $arguments   = [
+        $help = 'help';
+        $argName1 = 'arg1';
+        $arguments = [
             [
                 CommandInterface::ARGUMENT_NAME => $argName1,
             ],
         ];
-        $optName1    = 'opt1';
-        $options     = [
+        $optName1 = 'opt1';
+        $options = [
             [
                 CommandInterface::OPTION_NAME => $optName1,
             ],
         ];
 
-        /** @var Mockery\Mock $command */
+        /** @var MockInterface $command */
         $command = Mockery::mock(
             WhoaCommand::class . '[createContainer]',
             [$name, $description, $help, $arguments, $options, $callable]
@@ -349,7 +364,7 @@ class WhoaCommandTest extends TestCase
             ->shouldReceive('getApplicationConfiguration')->once()
             ->withNoArgs()
             ->andReturn([
-                ApplicationConfigurationInterface::KEY_ROUTES_FOLDER    => $routesFolder,
+                ApplicationConfigurationInterface::KEY_ROUTES_FOLDER => $routesFolder,
                 ApplicationConfigurationInterface::KEY_ROUTES_FILE_MASK => '*.php',
             ]);
         // add FileSystem to container

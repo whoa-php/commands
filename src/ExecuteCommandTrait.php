@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace Whoa\Commands;
 
 use Closure;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Whoa\Common\Reflection\CheckCallableTrait;
 use Whoa\Common\Reflection\ClassIsTrait;
 use Whoa\Contracts\Application\ApplicationConfigurationInterface;
@@ -33,6 +35,7 @@ use Whoa\Contracts\Container\ContainerInterface as WhoaContainerInterface;
 use Whoa\Contracts\FileSystem\FileSystemInterface;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 use ReflectionException;
+
 use function assert;
 use function array_merge;
 use function call_user_func;
@@ -43,24 +46,20 @@ use function count;
  * This code could be executed independently in tests without composer dependency.
  *
  * @package Whoa\Commands
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 trait ExecuteCommandTrait
 {
     use ClassIsTrait;
 
     /**
-     * @param string                 $name
-     * @param callable               $handler
-     * @param IoInterface            $inOut
+     * @param string $name
+     * @param callable $handler
+     * @param IoInterface $inOut
      * @param WhoaContainerInterface $container
-     *
      * @return void
-     *
      * @throws ReflectionException
-     *
-     * @SuppressWarnings(PHPMD.ElseExpression)
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function executeCommand(
         string $name,
@@ -71,9 +70,9 @@ trait ExecuteCommandTrait
         // This method does bootstrap for every command (e.g. configure containers)
         // and then calls the actual command handler.
 
-        // At this point we have probably only partly configured container and we need to read from it
+        // At this point we have probably only partly configured container, and we need to read from it
         // CLI route setting in order to fully configure it and then run the command with middleware.
-        // However, when we read anything from it, it changes its state so we are not allowed to add
+        // However, when we read anything from it, it changes its state, so we are not allowed to add
         // anything to it (technically we can but in some cases it might cause an exception).
         // So, what's the solution? We clone the container, read from the clone everything we need,
         // and then continue with the original unchanged container.
@@ -82,11 +81,11 @@ trait ExecuteCommandTrait
             $containerClone = clone $container;
 
             /** @var CacheSettingsProviderInterface $provider */
-            $provider  = $container->get(CacheSettingsProviderInterface::class);
+            $provider = $container->get(CacheSettingsProviderInterface::class);
             $appConfig = $provider->getApplicationConfiguration();
 
             $routesFolder = $appConfig[ApplicationConfigurationInterface::KEY_ROUTES_FOLDER] ?? '';
-            $routesMask   = $appConfig[ApplicationConfigurationInterface::KEY_ROUTES_FILE_MASK] ?? '';
+            $routesMask = $appConfig[ApplicationConfigurationInterface::KEY_ROUTES_FILE_MASK] ?? '';
 
             /** @var FileSystemInterface $files */
             assert(
@@ -108,7 +107,7 @@ trait ExecuteCommandTrait
 
         $handler = $this->buildExecutionChain($middleware, $handler, $container);
 
-        // finally go through all middleware and execute command handler
+        // finally, go through all middleware and execute command handler
         // (container has to be the same (do not send as param), but middleware my wrap IO (send as param)).
         call_user_func($handler, $inOut);
     }
@@ -116,27 +115,22 @@ trait ExecuteCommandTrait
     /**
      * @param string $routesFolder
      * @param string $commandName
-     *
      * @return array
-     *
      * @throws ReflectionException
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     private function readExtraContainerConfiguratorsAndMiddleware(string $routesFolder, string $commandName): array
     {
-        $routesFilter = new class ($commandName) implements RoutesInterface
-        {
+        $routesFilter = new class ($commandName) implements RoutesInterface {
             use CheckCallableTrait;
 
             /** @var array */
-            private $middleware = [];
+            private array $middleware = [];
 
             /** @var array */
-            private $configurators = [];
+            private array $configurators = [];
 
             /** @var string */
-            private $commandName;
+            private string $commandName;
 
             /**
              * @param string $commandName
@@ -216,7 +210,6 @@ trait ExecuteCommandTrait
 
             /**
              * @param array $mightBeConfigurators
-             *
              * @return bool
              */
             private function checkConfiguratorCallables(array $mightBeConfigurators): bool
@@ -237,7 +230,6 @@ trait ExecuteCommandTrait
 
             /**
              * @param array $mightBeMiddleware
-             *
              * @return bool
              */
             private function checkMiddlewareCallables(array $mightBeMiddleware): bool
@@ -246,10 +238,10 @@ trait ExecuteCommandTrait
 
                 foreach ($mightBeMiddleware as $mightBeCallable) {
                     $result = $result === true && $this->checkPublicStaticCallable(
-                        $mightBeCallable,
-                        [IoInterface::class, Closure::class, PsrContainerInterface::class],
-                        'void'
-                    );
+                            $mightBeCallable,
+                            [IoInterface::class, Closure::class, PsrContainerInterface::class],
+                            'void'
+                        );
                 }
 
                 return $result;
@@ -265,9 +257,8 @@ trait ExecuteCommandTrait
     }
 
     /**
-     * @param callable[]             $configurators
+     * @param callable[] $configurators
      * @param WhoaContainerInterface $container
-     *
      * @return void
      */
     private function executeContainerConfigurators(array $configurators, WhoaContainerInterface $container): void
@@ -278,10 +269,9 @@ trait ExecuteCommandTrait
     }
 
     /**
-     * @param array                 $middleware
-     * @param callable              $command
+     * @param array $middleware
+     * @param callable $command
      * @param PsrContainerInterface $container
-     *
      * @return Closure
      */
     private function buildExecutionChain(
@@ -295,7 +285,7 @@ trait ExecuteCommandTrait
 
         for ($index = count($middleware) - 1; $index >= 0; $index--) {
             $currentMiddleware = $middleware[$index];
-            $next              = function (IoInterface $inOut) use ($currentMiddleware, $next, $container): void {
+            $next = function (IoInterface $inOut) use ($currentMiddleware, $next, $container): void {
                 call_user_func($currentMiddleware, $inOut, $next, $container);
             };
         }

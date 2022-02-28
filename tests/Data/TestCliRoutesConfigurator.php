@@ -30,10 +30,10 @@ use Whoa\Contracts\Commands\RoutesInterface;
 class TestCliRoutesConfigurator implements RoutesConfiguratorInterface
 {
     /** @var string Command name for test. */
-    const COMMAND_NAME_1 = 'name-1';
+    public const COMMAND_NAME_1 = 'name-1';
 
     /** @var string Command name for test. */
-    const COMMAND_NAME_2 = 'name-2';
+    public const COMMAND_NAME_2 = 'name-2';
 
     /**
      * @inheritdoc

@@ -32,6 +32,7 @@ use ReflectionClass;
 use ReflectionException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+
 use function file_exists;
 
 /**
@@ -40,9 +41,8 @@ use function file_exists;
 trait CommandTrait
 {
     /**
-     * @param InputInterface  $input
+     * @param InputInterface $input
      * @param OutputInterface $output
-     *
      * @return IoInterface
      */
     protected function wrapIo(InputInterface $input, OutputInterface $output): IoInterface
@@ -52,22 +52,19 @@ trait CommandTrait
 
     /**
      * @param Composer $composer
-     *
      * @return ContainerInterface
-     *
      * @throws ReflectionException
      */
     protected function createContainer(Composer $composer): ContainerInterface
     {
-        // use application auto loader otherwise no app classes will be visible for us
+        // use application autoloader otherwise no app classes will be visible for us
         $autoLoaderPath = $this->getAutoloadPath($composer);
         if (file_exists($autoLoaderPath) === true) {
-            /** @noinspection PhpIncludeInspection */
             require_once $autoLoaderPath;
         }
 
-        $extra    = $this->getExtra($composer);
-        $appKey   = CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION;
+        $extra = $this->getExtra($composer);
+        $appKey = CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION;
         $classKey = CommandConstants::COMPOSER_JSON__EXTRA__APPLICATION__CLASS;
         $appClass = $extra[$appKey][$classKey] ?? CommandConstants::DEFAULT_APPLICATION_CLASS_NAME;
         if ($this->isValidApplicationClass($appClass) === false) {
@@ -77,14 +74,11 @@ trait CommandTrait
             );
         }
 
-        $container = $this->createApplication($appClass)->createContainer();
-
-        return $container;
+        return $this->createApplication($appClass)->createContainer();
     }
 
     /**
      * @param Composer $composer
-     *
      * @return string
      */
     protected function getAutoloadPath(Composer $composer): string
@@ -94,7 +88,6 @@ trait CommandTrait
 
     /**
      * @param Composer $composer
-     *
      * @return array
      */
     protected function getExtra(Composer $composer): array
@@ -104,9 +97,7 @@ trait CommandTrait
 
     /**
      * @param string $className
-     *
      * @return bool
-     *
      * @throws ReflectionException
      */
     protected function isValidApplicationClass(string $className): bool
@@ -120,7 +111,6 @@ trait CommandTrait
 
     /**
      * @param string $className
-     *
      * @return ApplicationInterface
      */
     protected function createApplication(string $className): ApplicationInterface

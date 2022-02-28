@@ -29,5 +29,5 @@ interface Messages
     /**
      * Namespace for string resources.
      */
-    const RESOURCES_NAMESPACE = 'Whoa.Commands';
+    public const RESOURCES_NAMESPACE = 'Whoa.Commands';
 }

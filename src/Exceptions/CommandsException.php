@@ -29,4 +29,5 @@ use Whoa\Contracts\Exceptions\WhoaExceptionInterface;
  */
 abstract class CommandsException extends RuntimeException implements WhoaExceptionInterface
 {
+    
 }

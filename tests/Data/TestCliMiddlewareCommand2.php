@@ -32,7 +32,7 @@ use Psr\Container\ContainerInterface;
 class TestCliMiddlewareCommand2 implements MiddlewareInterface
 {
     /** @var bool Flag if middleware was called */
-    private static $isExecuted = false;
+    private static bool $isExecuted = false;
 
     /** @var array Middleware callable */
     public const CALLABLE_METHOD = [self::class, self::MIDDLEWARE_METHOD_NAME];

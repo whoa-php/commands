@@ -23,6 +23,7 @@ namespace Whoa\Commands\Wrappers;
 
 use Whoa\Contracts\Commands\CommandInterface;
 use Symfony\Component\Console\Input\InputArgument;
+
 use function assert;
 use function is_string;
 
@@ -34,7 +35,7 @@ class DataArgumentWrapper
     /**
      * @var array
      */
-    private $data;
+    private array $data;
 
     /**
      * @param array $data
