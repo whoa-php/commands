@@ -46,9 +46,7 @@ use function array_key_exists;
  * This is a special command which is immediately available from composer. The main purpose of it is to
  * load command list from user application and generate a special cache file with the list. On the next
  * composer run the list would be loaded into composer and all the commands would be available.
- *
  * Also, it provides such a nice feature as generation of an empty/template command for the developer.
- *
  * @package Whoa\Commands
  */
 class CommandsCommand extends BaseCommand
@@ -236,7 +234,7 @@ EOT;
             return $result;
         };
 
-        $templateContent = $fileSystem->read(__DIR__ . DIRECTORY_SEPARATOR);
+        $templateContent = $fileSystem->read(__DIR__ . DIRECTORY_SEPARATOR . 'SampleCommand.txt');
         $fileSystem->write(
             $classPath,
             $replace($templateContent, [

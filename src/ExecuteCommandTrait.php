@@ -44,7 +44,6 @@ use function count;
 /**
  * Code for command execution is separated from the main code to get rid of a dependency from Composer.
  * This code could be executed independently in tests without composer dependency.
- *
  * @package Whoa\Commands
  */
 trait ExecuteCommandTrait
@@ -237,7 +236,8 @@ trait ExecuteCommandTrait
                 $result = true;
 
                 foreach ($mightBeMiddleware as $mightBeCallable) {
-                    $result = $result === true && $this->checkPublicStaticCallable(
+                    $result = $result === true &&
+                        $this->checkPublicStaticCallable(
                             $mightBeCallable,
                             [IoInterface::class, Closure::class, PsrContainerInterface::class],
                             'void'
